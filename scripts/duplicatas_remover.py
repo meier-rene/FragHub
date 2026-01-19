@@ -6,6 +6,7 @@ def remove_duplicatas(spectrum_list, output_directory, progress_callback=None, t
     """
     Removes duplicate entries from a given spectrum list based on the maximum 'row_size' for each unique
     combination of SPLASH and INCHIKEY. Entries with empty INCHIKEYs are not considered for deduplication.
+    Optimized for memory efficiency with large datasets.
 
     Parameters:
     -----------
@@ -45,7 +46,7 @@ def remove_duplicatas(spectrum_list, output_directory, progress_callback=None, t
     if total_items_callback:
         total_items_callback(total_items, 0)
 
-    # Calculate the size of rows in characters
+    # Calculate the size of rows in characters (do this efficiently)
     spectrum_list['row_size'] = spectrum_list.apply(lambda row: row.astype(str).map(len).sum(), axis=1)
 
     # Separate entries with empty or non-empty INCHIKEY
@@ -62,22 +63,26 @@ def remove_duplicatas(spectrum_list, output_directory, progress_callback=None, t
     all_indices = set(spectrum_list.index)
     indices_to_delete = list(all_indices - all_indices_to_keep)
 
-    # Extract duplicates to delete
-    deleted_spectra = spectrum_list.loc[indices_to_delete].copy()
-
-    # Drop the temporary 'row_size' column before adding them to the list of duplicates
-    deleted_spectra = deleted_spectra.drop(columns=['row_size'])
-    deleted_spectra['DELETION_REASON'] = "spectrum deleted because it's a duplicate (SPLASH + INCHIKEY)"
-
-    # Create the directory to store deleted spectra
+    # Extract duplicates to delete and write in chunks to reduce memory
     deleted_spectrums_dir = os.path.join(output_directory, 'DELETED_SPECTRUMS')
     os.makedirs(deleted_spectrums_dir, exist_ok=True)
-
-    # Write removed duplicates to a CSV file
     deleted_spectra_file = os.path.join(deleted_spectrums_dir, 'duplicatas_removed.csv')
-    deleted_spectra.to_csv(deleted_spectra_file, sep='\t', index=False, quotechar='"')
 
-    del deleted_spectra
+    # Write deleted spectra in chunks to save memory
+    if indices_to_delete:
+        chunk_size = 10000  # Write 10k rows at a time
+        for i in range(0, len(indices_to_delete), chunk_size):
+            chunk_indices = indices_to_delete[i:i + chunk_size]
+            deleted_chunk = spectrum_list.loc[chunk_indices].copy()
+            deleted_chunk = deleted_chunk.drop(columns=['row_size'])
+            deleted_chunk['DELETION_REASON'] = "spectrum deleted because it's a duplicate (SPLASH + INCHIKEY)"
+            
+            # Write header only for first chunk
+            mode = 'w' if i == 0 else 'a'
+            header = (i == 0)
+            deleted_chunk.to_csv(deleted_spectra_file, sep='\t', index=False, quotechar='"', 
+                               mode=mode, header=header)
+            del deleted_chunk  # Free memory immediately
 
     # Keep only unique spectra (convert the set to a list)
     spectrum_list = spectrum_list.loc[list(all_indices_to_keep)]

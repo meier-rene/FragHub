@@ -233,6 +233,11 @@ available_memory = psutil.virtual_memory().available
 global cpu_count
 cpu_count = os.cpu_count()  # Number of logical cores
 
+# Maximum number of spectra to process in a single batch
+# This helps prevent memory issues when processing large datasets (2M+ spectra)
+global max_spectra_per_batch
+max_spectra_per_batch = 500000  # Process 500k spectra at a time
+
 # ======================================================================================================================
 
 atoms_of_life = {
