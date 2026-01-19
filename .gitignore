@@ -5,3 +5,8 @@
 /scripts/dist/FragHub.zip
 /scripts/dist/build/
 /scripts/dist/dist/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
