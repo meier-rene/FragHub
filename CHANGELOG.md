@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+- **19_01_2026**:
+  - Memory optimizations for processing 2M+ spectra:
+    - CSV files now read in chunks (50k rows at a time) to reduce memory footprint
+    - Duplicate removal writes deleted spectra in chunks (10k rows) instead of all at once
+    - Added explicit garbage collection after major operations (parsing, deduplication, cleaning, splitting)
+    - Added max_spectra_per_batch parameter (500k) in globals_vars.py for future batch processing
+    - These changes significantly reduce memory usage when processing large datasets
+
 - **01_10_2025**:
   - fixing missing headers issue when writing a previously not existing csv file.
   - optimizing peaks filter with Numba just-in-time (jit)

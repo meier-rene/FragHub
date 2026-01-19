@@ -54,6 +54,7 @@ def check_for_update_processing(spectrum_list, output_directory, progress_callba
                                 prefix_callback=None, item_type_callback=None):
     """
     Check for updates in the given spectrum list using a profile name, with progress reporting via callbacks.
+    Optimized for memory efficiency with large datasets.
 
     :param spectrum_list: A list of spectrums to check for updates.
     :param profile_name: The name of the profile to use for checking updates.
@@ -126,15 +127,19 @@ def check_for_update_processing(spectrum_list, output_directory, progress_callba
     json_update_file["SPLASH_LIST"].update(new_splash)
 
     # Write the updated JSON file back to disk
+    # For large files, write efficiently
     with open(update_file_path, 'w') as f:
         json.dump(json_update_file, f, ensure_ascii=False, indent=4)
 
     scripts.deletion_report.previously_cleaned = total - len(final_spectrum_list)
 
-    deleted_spectrums_dir = os.path.join(output_directory, 'DELETED_SPECTRUMS')
-    previously_cleaned_file = os.path.join(deleted_spectrums_dir, 'previously_cleaned.csv')
-    deleted_spectra_df = pd.DataFrame(scripts.deletion_report.deleted_spectrum_list)
-    deleted_spectra_df.to_csv(previously_cleaned_file, sep='\t', index=False, quotechar='"')
+    # Write deleted spectra to CSV if any exist
+    if scripts.deletion_report.deleted_spectrum_list:
+        deleted_spectrums_dir = os.path.join(output_directory, 'DELETED_SPECTRUMS')
+        previously_cleaned_file = os.path.join(deleted_spectrums_dir, 'previously_cleaned.csv')
+        deleted_spectra_df = pd.DataFrame(scripts.deletion_report.deleted_spectrum_list)
+        deleted_spectra_df.to_csv(previously_cleaned_file, sep='\t', index=False, quotechar='"')
+        del deleted_spectra_df  # Free memory
 
     # Reinitialize the deleted_spectrum_list to free memory
     scripts.deletion_report.deleted_spectrum_list = []

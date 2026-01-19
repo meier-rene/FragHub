@@ -19,6 +19,7 @@ import traceback
 import time
 import sys
 import os
+import gc
 
 
 class InterruptedError(Exception):
@@ -125,6 +126,7 @@ def MAIN(progress_callback=None, total_items_callback=None, prefix_callback=None
         del FINAL_JSON
         spectrum_list.extend(FINAL_MGF)
         del FINAL_MGF
+        gc.collect()  # Force garbage collection to free memory
 
         # STEP 3: removing duplicatas
         spectrum_list = pd.DataFrame(spectrum_list)[ordered_columns]
@@ -137,6 +139,7 @@ def MAIN(progress_callback=None, total_items_callback=None, prefix_callback=None
                                           total_items_callback=total_items_callback, prefix_callback=prefix_callback,
                                           item_type_callback=item_type_callback)
         deletion_callback(f"duplicatas removed: {scripts.deletion_report.duplicatas_removed}")
+        gc.collect()  # Force garbage collection after duplicate removal
 
         check_stop_flag()
 
@@ -153,6 +156,7 @@ def MAIN(progress_callback=None, total_items_callback=None, prefix_callback=None
                                                                                  prefix_callback=prefix_callback,
                                                                                  item_type_callback=item_type_callback)
         deletion_callback(f"previously cleaned: {scripts.deletion_report.previously_cleaned}")
+        gc.collect()  # Force garbage collection after update check
 
         check_stop_flag()
 
@@ -186,6 +190,7 @@ def MAIN(progress_callback=None, total_items_callback=None, prefix_callback=None
                 Minimum high peaks not required: {scripts.deletion_report.minimum_high_peaks_not_requiered}
                 """
             )
+            gc.collect()  # Force garbage collection after cleaning
 
             check_stop_flag()
 
@@ -212,6 +217,7 @@ def MAIN(progress_callback=None, total_items_callback=None, prefix_callback=None
 
             deletion_callback(
                 f"No smiles, no inchi, no inchikey (updated): {scripts.deletion_report.no_smiles_no_inchi_no_inchikey}")
+            gc.collect()  # Force garbage collection after mols calculation
 
             check_stop_flag()
 
@@ -278,6 +284,7 @@ def MAIN(progress_callback=None, total_items_callback=None, prefix_callback=None
 
             del POS_df
             del NEG_df
+            gc.collect()  # Force garbage collection after splitting
             check_stop_flag()
 
             # -- SPLITTING [EXP / In-Silico] --

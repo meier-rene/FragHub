@@ -92,6 +92,7 @@ def concatenate_csv(csv_list, progress_callback=None, total_items_callback=None,
                     item_type_callback=None):
     """
     Concatenates multiple CSV files into a single DataFrame, with support for progress reporting via callbacks.
+    Uses chunked reading for large files to reduce memory usage.
 
     :param csv_list: List of paths to CSV files to be concatenated.
     :param progress_callback: A function to update the progress (optional).
@@ -120,27 +121,41 @@ def concatenate_csv(csv_list, progress_callback=None, total_items_callback=None,
         # 1. Detect the separator before reading the file
         separator = detect_separator(file)
 
-        # 2. Use the detected separator in pd.read_csv
-        df = pd.read_csv(file, sep=separator, quotechar='"', encoding="UTF-8", dtype=str)
+        # 2. Use the detected separator in pd.read_csv with chunked reading for memory efficiency
+        # For large files, read in chunks to avoid loading entire file into memory
+        chunk_size = 50000  # Process 50k rows at a time
+        chunks = []
+        
+        for chunk in pd.read_csv(file, sep=separator, quotechar='"', encoding="UTF-8", 
+                                  dtype=str, chunksize=chunk_size):
+            chunk.columns = chunk.columns.str.lower()
 
-        df.columns = df.columns.str.lower()
+            if 'filename' not in chunk.columns:
+                chunk['filename'] = os.path.basename(file)
 
-        if 'filename' not in df.columns:
-            df['filename'] = os.path.basename(file)
+            if 'filehash' not in chunk.columns:
+                chunk['filehash'] = file_hash
 
-        if 'filehash' not in df.columns:
-            df['filehash'] = file_hash
+            chunk = chunk.astype(str)
+            chunks.append(chunk)
 
-        df.columns = df.columns.str.lower()
-        df = df.astype(str)
-        df_list.append(df)
+        # Concatenate chunks from this file
+        if chunks:
+            df = pd.concat(chunks, ignore_index=True)
+            df_list.append(df)
+            del chunks  # Free memory
 
         processed_files += 1
         if progress_callback:
             progress_callback(processed_files)
 
-    df = pd.concat(df_list, ignore_index=True)
-    return df
+    # Concatenate all files
+    if df_list:
+        df = pd.concat(df_list, ignore_index=True)
+        del df_list  # Free memory
+        return df
+    else:
+        return pd.DataFrame()
 
 
 def concatenate_JSON(json_list, progress_callback=None, total_items_callback=None, prefix_callback=None, item_type_callback=None):
