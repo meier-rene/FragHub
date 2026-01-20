@@ -8,6 +8,16 @@
 ![License: CeCILL](https://img.shields.io/badge/License-CeCILL-yellow.svg)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17235587.svg)](https://doi.org/10.5281/zenodo.17235587)
 
+## NEW: Kedro Pipeline Support
+
+FragHub is now available as a **Kedro pipeline** for improved modularity, reproducibility, and scalability!
+
+- **📖 [Kedro Pipeline Documentation](KEDRO_README.md)** - Complete guide to using FragHub as a Kedro pipeline
+- **🚀 Quick Start**: `python run_kedro.py` (after installing dependencies)
+- **💡 Benefits**: Modular nodes, easy configuration, step-by-step debugging, and deployment flexibility
+
+Both the original GUI application and the Kedro pipeline implementation are available.
+
 ## INSTALL INSTRUCTIONS BELLOW
 [See install instructions](#installation)
 
