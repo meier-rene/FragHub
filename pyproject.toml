@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fraghub_pipeline"
+version = "1.4.1"
+description = "FragHub mass spectrometry data processing pipeline using Kedro"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "kedro>=1.1.1",
+    "pandas>=2.1.4",
+    "rdkit>=2023.9.4",
+    "numpy>=1.26.3",
+    "ijson>=3.2.3",
+    "PyQt6~=6.7.1",
+    "psutil~=6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "black",
+    "flake8",
+]
+
+[tool.setuptools]
+packages = ["fraghub_pipeline"]
+package-dir = {"" = "src"}
+
+[tool.kedro]
+package_name = "fraghub_pipeline"
+project_name = "FragHub Pipeline"
+kedro_init_version = "1.1.1"

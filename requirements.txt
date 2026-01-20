@@ -4,3 +4,4 @@ numpy>=1.26.3
 ijson>=3.2.3
 PyQt6~=6.7.1
 psutil~=6.0.0
+kedro>=1.1.1

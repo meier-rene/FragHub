@@ -1,0 +1,81 @@
+# Data Catalog
+# Define all data sources and intermediate datasets
+
+# Input data
+input_files:
+  type: pandas.CSVDataset
+  filepath: INPUT/
+  load_args:
+    sep: ";"
+
+# Intermediate datasets
+parsed_data:
+  type: pickle.PickleDataset
+  filepath: data/02_intermediate/parsed_data.pkl
+
+splash_generated_data:
+  type: pickle.PickleDataset
+  filepath: data/02_intermediate/splash_generated_data.pkl
+
+deduplicated_data:
+  type: pickle.PickleDataset
+  filepath: data/02_intermediate/deduplicated_data.pkl
+
+updated_data:
+  type: pickle.PickleDataset
+  filepath: data/02_intermediate/updated_data.pkl
+
+cleaned_spectra:
+  type: pickle.PickleDataset
+  filepath: data/03_primary/cleaned_spectra.pkl
+
+calculated_mols:
+  type: pickle.PickleDataset
+  filepath: data/03_primary/calculated_mols.pkl
+
+pubchem_completed:
+  type: pickle.PickleDataset
+  filepath: data/03_primary/pubchem_completed.pkl
+
+ontology_completed:
+  type: pickle.PickleDataset
+  filepath: data/03_primary/ontology_completed.pkl
+
+de_novo_calculated:
+  type: pickle.PickleDataset
+  filepath: data/04_feature/de_novo_calculated.pkl
+
+normalized_data:
+  type: pickle.PickleDataset
+  filepath: data/04_feature/normalized_data.pkl
+
+# Split datasets
+pos_neg_split:
+  type: pickle.PickleDataset
+  filepath: data/05_model_input/pos_neg_split.pkl
+
+lc_gc_split:
+  type: pickle.PickleDataset
+  filepath: data/05_model_input/lc_gc_split.pkl
+
+exp_insilico_split:
+  type: pickle.PickleDataset
+  filepath: data/05_model_input/exp_insilico_split.pkl
+
+# MSP converted data
+msp_converted:
+  type: pickle.PickleDataset
+  filepath: data/06_models/msp_converted.pkl
+
+# Output datasets
+output_csv:
+  type: pickle.PickleDataset
+  filepath: data/08_reporting/output_csv.pkl
+
+output_msp:
+  type: pickle.PickleDataset
+  filepath: data/08_reporting/output_msp.pkl
+
+output_json:
+  type: pickle.PickleDataset
+  filepath: data/08_reporting/output_json.pkl
