@@ -16,7 +16,7 @@ msp: 1.0
 json: 1.0
 
 # Peak filters parameters
-minimum_peak_requiered: 3
+minimum_peak_required: 3
 remove_peak_above_precursormz: 1
 reduce_peak_list: 100
 normalize_intensity: 1

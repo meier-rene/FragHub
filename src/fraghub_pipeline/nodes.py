@@ -271,7 +271,7 @@ def de_novo_calculation_node(ontology_data: tuple, calculate_de_novo: float) -> 
 
 def normalize_data_node(de_novo_data: tuple) -> tuple:
     """
-    Normalize data to handle 'not found' values.
+    Node 10: Normalize data to handle 'not found' values.
     
     Args:
         de_novo_data: Tuple containing (spectrum_list, update_flag)
@@ -389,7 +389,7 @@ def write_outputs_node(
     reset_updates: float
 ) -> dict:
     """
-    Node 14: Write output files in requested formats.
+    Node 15: Write output files in requested formats.
     
     Args:
         exp_split: Tuple of 8 DataFrames + update_flag
