@@ -153,7 +153,7 @@ def check_updates_node(spectrum_list: pd.DataFrame, output_directory: str) -> tu
     return spectrum_list, update_flag
 
 
-def clean_spectra_node(update_data: tuple, output_directory: str) -> pd.DataFrame:
+def clean_spectra_node(update_data: tuple, output_directory: str) -> tuple:
     """
     Node 5: Clean and filter spectra based on quality criteria.
     
@@ -162,95 +162,103 @@ def clean_spectra_node(update_data: tuple, output_directory: str) -> pd.DataFram
         output_directory: Path to output directory
         
     Returns:
-        DataFrame with cleaned spectra
+        Tuple of (DataFrame with cleaned spectra, update_flag)
     """
     spectrum_list, update_flag = update_data
     
     if spectrum_list is None or len(spectrum_list) == 0:
         logger.warning("No spectra to clean")
-        return None
+        return None, update_flag
     
     logger.info("Cleaning spectra")
     spectrum_list = spectrum_cleaning_processing(spectrum_list, output_directory)
     
     if spectrum_list is None or len(spectrum_list) == 0:
         logger.warning("No spectra remaining after cleaning")
-        return None
+        return None, update_flag
     
-    return pd.DataFrame(spectrum_list)[ordered_columns].astype(str)
+    return pd.DataFrame(spectrum_list)[ordered_columns].astype(str), update_flag
 
 
-def calculate_mols_node(spectrum_list: pd.DataFrame, output_directory: str) -> pd.DataFrame:
+def calculate_mols_node(cleaned_data: tuple, output_directory: str) -> tuple:
     """
     Node 6: Perform molecular derivation and mass calculations.
     
     Args:
-        spectrum_list: DataFrame containing cleaned spectra
+        cleaned_data: Tuple containing (spectrum_list, update_flag)
         output_directory: Path to output directory
         
     Returns:
-        DataFrame with calculated molecular properties
+        Tuple of (DataFrame with calculated molecular properties, update_flag)
     """
+    spectrum_list, update_flag = cleaned_data
+    
     if spectrum_list is None:
-        return None
+        return None, update_flag
         
     logger.info("Calculating molecular properties")
     spectrum_list = mols_derivation_and_calculation(spectrum_list, output_directory)
     
-    return spectrum_list
+    return spectrum_list, update_flag
 
 
-def complete_pubchem_node(spectrum_list: pd.DataFrame) -> pd.DataFrame:
+def complete_pubchem_node(mols_data: tuple) -> tuple:
     """
     Node 7: Complete missing metadata from PubChem database.
     
     Args:
-        spectrum_list: DataFrame containing spectra
+        mols_data: Tuple containing (spectrum_list, update_flag)
         
     Returns:
-        DataFrame with completed metadata from PubChem
+        Tuple of (DataFrame with completed metadata from PubChem, update_flag)
     """
+    spectrum_list, update_flag = mols_data
+    
     if spectrum_list is None:
-        return None
+        return None, update_flag
         
     logger.info("Completing from PubChem data")
     spectrum_list = complete_from_pubchem_datas(spectrum_list)
     
-    return spectrum_list
+    return spectrum_list, update_flag
 
 
-def complete_ontologies_node(spectrum_list: pd.DataFrame) -> pd.DataFrame:
+def complete_ontologies_node(pubchem_data: tuple) -> tuple:
     """
     Node 8: Complete ontology classifications.
     
     Args:
-        spectrum_list: DataFrame containing spectra
+        pubchem_data: Tuple containing (spectrum_list, update_flag)
         
     Returns:
-        DataFrame with completed ontologies
+        Tuple of (DataFrame with completed ontologies, update_flag)
     """
+    spectrum_list, update_flag = pubchem_data
+    
     if spectrum_list is None:
-        return None
+        return None, update_flag
         
     logger.info("Completing ontologies")
     spectrum_list = ontologies_completion(spectrum_list)
     
-    return spectrum_list
+    return spectrum_list, update_flag
 
 
-def de_novo_calculation_node(spectrum_list: pd.DataFrame, calculate_de_novo: float) -> pd.DataFrame:
+def de_novo_calculation_node(ontology_data: tuple, calculate_de_novo: float) -> tuple:
     """
     Node 9: Perform de novo fragment formula calculations (conditional).
     
     Args:
-        spectrum_list: DataFrame containing spectra
+        ontology_data: Tuple containing (spectrum_list, update_flag)
         calculate_de_novo: Flag to enable/disable de novo calculation
         
     Returns:
-        DataFrame with de novo calculations (if enabled)
+        Tuple of (DataFrame with de novo calculations (if enabled), update_flag)
     """
+    spectrum_list, update_flag = ontology_data
+    
     if spectrum_list is None:
-        return None
+        return None, update_flag
         
     if calculate_de_novo == 1.0:
         logger.info("Performing de novo calculations")
@@ -258,45 +266,49 @@ def de_novo_calculation_node(spectrum_list: pd.DataFrame, calculate_de_novo: flo
     else:
         logger.info("Skipping de novo calculations")
     
-    return spectrum_list
+    return spectrum_list, update_flag
 
 
-def normalize_data_node(spectrum_list: pd.DataFrame) -> pd.DataFrame:
+def normalize_data_node(de_novo_data: tuple) -> tuple:
     """
     Normalize data to handle 'not found' values.
     
     Args:
-        spectrum_list: DataFrame containing spectra
+        de_novo_data: Tuple containing (spectrum_list, update_flag)
         
     Returns:
-        Normalized DataFrame
+        Tuple of (normalized DataFrame, update_flag)
     """
+    spectrum_list, update_flag = de_novo_data
+    
     if spectrum_list is None:
-        return None
+        return None, update_flag
         
     logger.info("Normalizing data")
     spectrum_list = normalize_to_not_found(spectrum_list)
     
-    return spectrum_list
+    return spectrum_list, update_flag
 
 
-def split_ion_mode_node(spectrum_list: pd.DataFrame) -> tuple:
+def split_ion_mode_node(normalized_data: tuple) -> tuple:
     """
     Node 10: Split spectra by ion mode (Positive/Negative).
     
     Args:
-        spectrum_list: DataFrame containing all spectra
+        normalized_data: Tuple containing (spectrum_list, update_flag)
         
     Returns:
-        Tuple of (POS_df, NEG_df)
+        Tuple of (POS_df, NEG_df, update_flag)
     """
+    spectrum_list, update_flag = normalized_data
+    
     if spectrum_list is None:
-        return None, None
+        return None, None, update_flag
         
     logger.info("Splitting by ion mode (POS/NEG)")
     POS_df, NEG_df = split_pos_neg(spectrum_list)
     
-    return POS_df, NEG_df
+    return POS_df, NEG_df, update_flag
 
 
 def split_chromatography_node(ion_split: tuple) -> tuple:
@@ -304,20 +316,20 @@ def split_chromatography_node(ion_split: tuple) -> tuple:
     Node 11: Split spectra by chromatography type (LC/GC).
     
     Args:
-        ion_split: Tuple of (POS_df, NEG_df)
+        ion_split: Tuple of (POS_df, NEG_df, update_flag)
         
     Returns:
-        Tuple of (POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df)
+        Tuple of (POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df, update_flag)
     """
-    POS_df, NEG_df = ion_split
+    POS_df, NEG_df, update_flag = ion_split
     
     if POS_df is None and NEG_df is None:
-        return None, None, None, None
+        return None, None, None, None, update_flag
         
     logger.info("Splitting by chromatography (LC/GC)")
     POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df = split_LC_GC(POS_df, NEG_df)
     
-    return POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df
+    return POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df, update_flag
 
 
 def split_experimental_node(lc_gc_split: tuple) -> tuple:
@@ -325,20 +337,20 @@ def split_experimental_node(lc_gc_split: tuple) -> tuple:
     Node 12: Split spectra by experimental vs in-silico.
     
     Args:
-        lc_gc_split: Tuple of (POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df)
+        lc_gc_split: Tuple of (POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df, update_flag)
         
     Returns:
-        Tuple of 8 DataFrames (experimental and in-silico for each combination)
+        Tuple of 8 DataFrames (experimental and in-silico for each combination) + update_flag
     """
-    POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df = lc_gc_split
+    POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df, update_flag = lc_gc_split
     
     if all(df is None for df in [POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df]):
-        return (None,) * 8
+        return (*((None,) * 8), update_flag)
         
     logger.info("Splitting experimental vs in-silico")
     result = exp_in_silico_splitter(POS_LC_df, POS_GC_df, NEG_LC_df, NEG_GC_df)
     
-    return result
+    return (*result, update_flag)
 
 
 def convert_to_msp_node(exp_split: tuple, msp_enabled: float) -> tuple:
@@ -346,18 +358,21 @@ def convert_to_msp_node(exp_split: tuple, msp_enabled: float) -> tuple:
     Node 13: Convert CSV data to MSP format (conditional).
     
     Args:
-        exp_split: Tuple of 8 DataFrames from experimental split
+        exp_split: Tuple of 8 DataFrames from experimental split + update_flag
         msp_enabled: Flag to enable/disable MSP conversion
         
     Returns:
         Tuple of 8 MSP-formatted data structures (if enabled)
     """
-    if all(df is None for df in exp_split):
+    # Extract update_flag from the end
+    *data_frames, update_flag = exp_split
+    
+    if all(df is None for df in data_frames):
         return (None,) * 8
         
     if msp_enabled == 1.0:
         logger.info("Converting to MSP format")
-        result = csv_to_msp(*exp_split)
+        result = csv_to_msp(*data_frames)
         return result
     else:
         logger.info("Skipping MSP conversion")
@@ -368,32 +383,38 @@ def write_outputs_node(
     exp_split: tuple,
     msp_data: tuple,
     output_directory: str,
-    update_flag: bool,
     csv_enabled: float,
     msp_enabled: float,
-    json_enabled: float
+    json_enabled: float,
+    reset_updates: float
 ) -> dict:
     """
     Node 14: Write output files in requested formats.
     
     Args:
-        exp_split: Tuple of 8 DataFrames
+        exp_split: Tuple of 8 DataFrames + update_flag
         msp_data: Tuple of 8 MSP-formatted data
         output_directory: Path to output directory
-        update_flag: Whether this is an update operation
         csv_enabled: Flag to enable CSV output
         msp_enabled: Flag to enable MSP output
         json_enabled: Flag to enable JSON output
+        reset_updates: Flag to reset updates
         
     Returns:
         Dictionary with output status
     """
+    # Extract update_flag and data frames
+    *data_frames, update_flag = exp_split
     (POS_LC_df, POS_LC_In_Silico_df, POS_GC_df, POS_GC_In_Silico_df,
-     NEG_LC_df, NEG_LC_In_Silico_df, NEG_GC_df, NEG_GC_In_Silico_df) = exp_split
+     NEG_LC_df, NEG_LC_In_Silico_df, NEG_GC_df, NEG_GC_In_Silico_df) = data_frames
     
-    if all(df is None for df in exp_split):
+    if all(df is None for df in data_frames):
         logger.warning("No data to write")
         return {"status": "no_data"}
+    
+    # Determine the actual update flag based on reset_updates parameter
+    if reset_updates == 1.0:
+        update_flag = False
     
     # Write CSV
     if csv_enabled == 1.0:
