@@ -1,0 +1,9 @@
+"""Project settings for FragHub Kedro pipeline."""
+from kedro.config import OmegaConfigLoader
+
+# Configure the OmegaConfigLoader
+CONFIG_LOADER_CLASS = OmegaConfigLoader
+CONFIG_LOADER_ARGS = {
+    "base_env": "base",
+    "default_run_env": "base",
+}

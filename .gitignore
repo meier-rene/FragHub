@@ -5,3 +5,13 @@
 /scripts/dist/FragHub.zip
 /scripts/dist/build/
 /scripts/dist/dist/
+
+# Kedro
+data/
+logs/
+.kedro/
+*.egg-info/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage

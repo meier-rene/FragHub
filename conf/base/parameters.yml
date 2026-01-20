@@ -1,0 +1,27 @@
+# Parameters for FragHub pipeline
+
+# Input/Output directories
+input_directory: "INPUT"
+output_directory: "OUTPUT"
+
+# Reset and update settings
+reset_updates: 0.0
+
+# De novo calculation
+calculate_de_novo: 1.0
+
+# Output formats
+csv: 1.0
+msp: 1.0
+json: 1.0
+
+# Peak filters parameters
+minimum_peak_requiered: 3
+remove_peak_above_precursormz: 1
+reduce_peak_list: 100
+normalize_intensity: 1
+mz_from: 0
+mz_to: 10000
+intensity_percent: 5
+no_peaks: 3
+entropy_score: 0.5
